@@ -1,0 +1,185 @@
+import java.io.*;
+import java.util.*;
+
+class LibraryManagementSystem {
+    static Scanner scanner = new Scanner(System.in);
+    static List<Item> libraryItems = new ArrayList<>();
+    static final String DATA_FILE = "library_data.txt";
+
+    public static void main(String[] args) {
+        loadLibraryData();
+        int choice;
+        do {
+            System.out.println("\n=== Library Management System ===");
+            System.out.println("1. Add Item");
+            System.out.println("2. Search Item");
+            System.out.println("3. Checkout Item");
+            System.out.println("4. Return Item");
+            System.out.println("5. View All Items");
+            System.out.println("6. Exit");
+            System.out.print("Enter your choice: ");
+            choice = scanner.nextInt();
+            scanner.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1 -> addItem();
+                case 2 -> searchItem();
+                case 3 -> checkoutItem();
+                case 4 -> returnItem();
+                case 5 -> viewAllItems();
+                case 6 -> saveLibraryData();
+                default -> System.out.println("Invalid choice. Please try again.");
+            }
+        } while (choice != 6);
+    }
+
+    // Method to add a new library item
+    static void addItem() {
+        System.out.print("Enter Item ID: ");
+        String id = scanner.nextLine();
+        System.out.print("Enter Title: ");
+        String title = scanner.nextLine();
+        System.out.print("Enter Author: ");
+        String author = scanner.nextLine();
+        System.out.print("Enter Category: ");
+        String category = scanner.nextLine();
+
+        libraryItems.add(new Item(id, title, author, category, true));
+        System.out.println("Item added successfully!");
+    }
+
+    // Method to search for items
+    static void searchItem() {
+        System.out.print("Enter title to search: ");
+        String title = scanner.nextLine();
+
+        boolean found = false;
+        for (Item item : libraryItems) {
+            if (item.getTitle().equalsIgnoreCase(title)) {
+                System.out.println(item);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("Item not found.");
+        }
+    }
+
+    // Method to checkout an item
+    static void checkoutItem() {
+        System.out.print("Enter Item ID to checkout: ");
+        String id = scanner.nextLine();
+
+        for (Item item : libraryItems) {
+            if (item.getId().equals(id)) {
+                if (item.isAvailable()) {
+                    item.setAvailable(false);
+                    System.out.println("Item checked out successfully!");
+                } else {
+                    System.out.println("Item is already checked out.");
+                }
+                return;
+            }
+        }
+        System.out.println("Item not found.");
+    }
+
+    // Method to return an item
+    static void returnItem() {
+        System.out.print("Enter Item ID to return: ");
+        String id = scanner.nextLine();
+
+        for (Item item : libraryItems) {
+            if (item.getId().equals(id)) {
+                if (!item.isAvailable()) {
+                    item.setAvailable(true);
+                    System.out.println("Item returned successfully!");
+                } else {
+                    System.out.println("Item is already available.");
+                }
+                return;
+            }
+        }
+        System.out.println("Item not found.");
+    }
+
+    // Method to view all items
+    static void viewAllItems() {
+        if (libraryItems.isEmpty()) {
+            System.out.println("No items in the library.");
+        } else {
+            for (Item item : libraryItems) {
+                System.out.println(item);
+            }
+        }
+    }
+
+    // Load library data from file
+    static void loadLibraryData() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(DATA_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                libraryItems.add(new Item(parts[0], parts[1], parts[2], parts[3], Boolean.parseBoolean(parts[4])));
+            }
+        } catch (IOException e) {
+            System.out.println("No existing data found. Starting fresh.");
+        }
+    }
+
+    // Save library data to file
+    static void saveLibraryData() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(DATA_FILE))) {
+            for (Item item : libraryItems) {
+                writer.write(item.toCSV());
+                writer.newLine();
+            }
+            System.out.println("Library data saved successfully!");
+        } catch (IOException e) {
+            System.out.println("Error saving library data: " + e.getMessage());
+        }
+    }
+}
+
+// Class representing a library item
+class Item {
+    private String id;
+    private String title;
+    private String author;
+    private String category;
+    private boolean available;
+
+    public Item(String id, String title, String author, String category, boolean available) {
+        this.id = id;
+        this.title = title;
+        this.author = author;
+        this.category = category;
+        this.available = available;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("ID: %s, Title: %s, Author: %s, Category: %s, Available: %s",
+                id, title, author, category, available ? "Yes" : "No");
+    }
+
+    public String toCSV() {
+        return String.join(",", id, title, author, category, String.valueOf(available));
+    }
+}
